@@ -1,0 +1,130 @@
+.data
+input: .asciiz "E E E D D D D N" #N denotes end
+
+.text
+lui x31 0x10000
+lui x27 0x10000
+lui x30 0x10000
+lui x29 0x10000
+addi x27 x27 0x200 #to store the remarks for each operation
+addi x30 x30 0x100 #base address for the queue itself
+addi x29 x29 0x600 #the base where loading is present is stored in x29
+jal x1 loadEnque
+
+#jal x0 exit
+addi x4 x0 0 #store the front pointer
+addi x5 x0 0 #store the end pointer
+
+
+jal x1 Driver
+jal x0 exit
+
+Driver:
+    addi x2 x2 -4
+    sw x1 0 x2
+    lb x3 0 x31
+    addi x6 x0 69
+    addi x7 x0 68
+    addi x23 x0 83
+    beq x3 x7 deque
+    beq x3 x6 enque
+    beq x3 x23 size
+    
+    lw x1 0 x2
+    addi x2 x2 4
+    jalr x0 x1 0
+    enque:
+        jal x1 Enque
+        addi x31 x31 2
+    lw x1 0 x2
+    addi x2 x2 4
+        jal x0 Driver
+    deque:
+        jal x1 Deque
+        addi x31 x31 2
+    lw x1 0 x2
+    addi x2 x2 4
+        jal x0 Driver   
+    size:
+        jal x1 Size
+    lw x1 0 x2
+    addi x2 x2 4
+        addi x31 x31 2
+        jal x0 Driver
+    
+
+
+Deque:
+    addi x2 x2 -4
+    sw x1 0 x2
+    sub x6 x5 x4
+    beq x6 x0 Underflow
+    slli x7 x4 2
+    add x8 x30 x7
+    sw x0 0 x8
+    
+    addi x6 x0 68
+    sw x6 0 x27
+    addi x27 x27 4
+    
+    addi x4 x4 1
+    lw  x1 0 x2
+    addi x2 x2 4 
+    jalr x0 x1 0
+    
+    Underflow:
+        addi x10 x0 -1
+        jal x0 Error    
+
+
+Enque:
+    addi x2 x2 -4
+    sw x1 0 x2
+    addi x3 x0 3
+    sub x6 x5 x4
+    bge x6 x3 Overflow
+    lw x6 0 x29 #loaded the word which was to be enqued
+    slli x7 x5 2 #calculate the offset starting from the front
+    add x8 x30 x7 #address for storing
+    sw x6 0 x8 #stored the word
+    
+    addi x6 x0 69  #the remark
+    sw x6 0 x27
+    addi x27 x27 4
+    
+    addi x29 x29 4
+    addi x5 x5 1
+    lw x1 0 x2
+    addi x2 x2 4
+    jalr x0 x1 0
+    
+    Overflow:
+        addi x10 x0 -2
+        jal x0 Error
+
+Size:
+    addi x2 x2 -4
+    lw x1 0 x2
+    sub x15 x5 x4
+    #addi x15 x15 1
+    lw x1 0 x2
+    addi x2 x2 4
+    jalr x0 x1 0
+
+
+loadEnque:
+    addi x3 x3 0
+    addi x4 x0 0 #the iterator
+    addi x5 x0 25 #number of enque elements
+    loop:
+        beq x4 x5 endLoop
+        slli x6 x4 2 #get the offset
+        add x28 x6 x29
+        sw x4 0 x28 #store the element to be enqueued iteself
+        addi x4 x4 1
+        beq x0 x0 loop
+    endLoop:
+    jalr x0 x1 0
+Error:
+
+exit:
