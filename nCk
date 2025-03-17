@@ -1,0 +1,55 @@
+.data
+n: .word 6
+k: .word 4
+
+.text
+lui x31 0x10000
+lw x3 0 x31 #n
+lw x4 4 x31 #k
+
+jal x1 binom
+jal x0 main_exit
+
+binom:
+    addi x2 x2 -16
+    sw x1 12 x2
+    sw x3 8 x2 #store the n
+    sw x4 4 x2 #store the k
+    
+    beq x3 x4 base
+    beq x4 x0 base
+    
+    #n-1Ck
+    addi x3 x3 -1
+    jal x1 binom
+    
+    sw x10 0 x2 #store the result
+    lw x3 8 x2 #load the callee n
+    lw x4 4 x2
+    
+    addi x2 x2 -4
+    sw x1 0 x2 
+
+    addi x3 x3 -1
+    addi x4 x4 -1
+    
+    jal x1 binom
+    addi x2 x2 4
+    
+    lw x6 0 x2
+    add x10 x10 x6 #nCk=nCk-1+n-1Ck-1
+    
+    lw x1 12 x2
+    addi x2 x2 16
+    jalr x0 x1 0
+    
+       
+base:
+lw x1 12 x2
+addi x10 x0 1
+addi x2 x2 16
+jalr x0 x1 0
+
+
+
+main_exit:
