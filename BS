@@ -1,0 +1,50 @@
+.data
+n: .word 5
+s: .word 50
+l: .word 10 20 30 40 50
+.text
+lui x7 0x10000
+lw x5 0 x7 #n
+lw x6 4 x7 #search
+addi x7 x7 8
+addi x8 x0 0  #l=0
+add x9 x0 x5
+addi x9 x9 -1  #r=n-1
+addi x12 x0 2
+jal x1 bs
+beq x0 x0 exit
+bs:
+    addi sp sp -12
+    sw x9 0 sp
+    sw x8 4 sp
+    sw x1 8 sp
+    blt x9 x8 not_found
+    add x10 x9 x8
+    div x10 x10 x12
+    slli x11 x10 2
+    add x13 x7 x11
+    lw x14 0 x13
+    beq x14 x6 found
+    blt x14 x6 less
+    more:
+        addi x9 x10 -1
+        beq x0 x0 rec
+    less:
+        addi x8 x10 1
+        beq x0 x0 rec
+    rec:
+        jal x1 bs
+        beq x0 x0 bs_return
+    found:
+        beq x0 x0 bs_return
+    not_found:
+        addi x10 x0 -1
+        beq x0 x0 bs_return
+bs_return:
+    lw x9 0 sp
+    lw x8 4 sp
+    lw x1 8 sp
+    addi sp sp 12
+    jalr x0 x1 0
+    
+exit:
