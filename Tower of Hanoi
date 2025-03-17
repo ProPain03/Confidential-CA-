@@ -1,0 +1,91 @@
+gpt se comments dalwaa diye isme, smjh aa jayega agar dekhna ho kisiko toh
+.data
+n: .word 4
+
+.text
+    lui   x31, 0x10000         # x31 = 0x10000000
+    addi  x30, x31, 4          # x30 = storage pointer (moves start at 0x10000004)
+    lw    x3, 0(x31)           # load n (n=4)
+    addi  x29, x0, 65          # temp (aux) = 'A'
+    addi  x28, x0, 83          # source    = 'S'
+    addi  x27, x0, 68          # destination = 'D'
+
+    jal   x1, towerOfHanoi
+    jal   x0, exit
+
+#------------------------------------------------------------------
+# towerOfHanoi:
+#  Implements TOH(n, source, destination, temp)
+#
+#  Stack frame (20 bytes):
+#     0(x2):  saved n   (x3)
+#     4(x2):  saved destination (x27)
+#     8(x2):  saved source      (x28)
+#    12(x2):  saved temp        (x29)
+#    16(x2):  saved return address (x1)
+#------------------------------------------------------------------
+towerOfHanoi:
+    addi  x2, x2, -20
+    sw    x1, 16(x2)
+    sw    x29, 12(x2)         # save temp
+    sw    x28, 8(x2)          # save source
+    sw    x27, 4(x2)          # save destination
+    sw    x3, 0(x2)           # save n
+
+    addi  x5, x0, 1
+    beq   x3, x5, base 
+    addi  x3, x3, -1         # n = n - 1
+    # For first recursion:
+    #   source remains x28,
+    #   destination becomes old temp (x29),
+    #   temp becomes old destination (x27).
+    addi  x24, x27, 0        # x24 = old destination
+    addi  x27, x29, 0        # new destination = old temp
+    addi  x29, x24, 0        # new temp = old destination
+    jal   x1, towerOfHanoi   # call TOH(n-1, source, destination=temp, temp=dest)
+
+    # Restore original n and rod registers from stack for the move record:
+    lw    x3, 0(x2)          # restore original n
+    lw    x28, 8(x2)         # restore source
+    lw    x27, 4(x2)         # restore destination
+    lw    x29, 12(x2)        # restore temp
+
+    # --- Record move: move disk n from source (x28) to destination (x27) ---
+    sb    x27, 0(x30)        # store destination rod (1 byte)
+    addi  x30, x30, 1
+    sb    x28, 0(x30)        # store source rod (1 byte)
+    addi  x30, x30, 1
+    sb    x3, 0(x30)         # store disk number (n)
+    addi  x30, x30, 2        # pad so each move occupies 4 bytes
+
+    # --- Second recursive call: TOH(n-1, temp, destination, source) ---
+    addi  x3, x3, -1         # now n = original n - 1
+    # For second recursion:
+    #   source becomes old temp,
+    #   destination remains x27,
+    #   temp becomes old source.
+    addi  x24, x28, 0        # x24 = old source
+    addi  x28, x29, 0        # new source = old temp
+    addi  x29, x24, 0        # new temp = old source
+    jal   x1, towerOfHanoi
+
+    lw    x1, 16(x2)         # restore return address
+    addi  x2, x2, 20         # pop stack frame
+    jalr  x0, x1, 0
+
+#------------------------------------------------------------------
+# base:
+#  Base case: n == 1. Record a single move: move disk 1 from source to destination.
+#------------------------------------------------------------------
+base:
+    sb    x27, 0(x30)        # store destination rod
+    addi  x30, x30, 1
+    sb    x28, 0(x30)        # store source rod
+    addi  x30, x30, 1
+    sb    x3, 0(x30)         # store disk number (should be 1)
+    addi  x30, x30, 2        # pad to 4 bytes
+    lw    x1, 16(x2)
+    addi  x2, x2, 20
+    jalr  x0, x1, 0
+
+exit:
