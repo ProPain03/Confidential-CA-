@@ -1,0 +1,40 @@
+.data
+a: .word 6510
+b: .word 20
+.text
+addi sp sp -16
+sw x5 8 sp
+sw x6 4 sp
+sw x7 0 sp
+sw x8 12 sp
+lui x5 0x10000
+lw x6 0 x5
+lw x7 4 x5
+jal x1 gcd
+beq x0 x0 exit
+gcd:    
+    addi sp sp -12
+    sw x1 8 sp
+    sw x6 4 sp
+    sw x7 0 sp
+    beq x7 x0 done
+rec:
+    add x8 x6 x0
+    addi x6 x7 0
+    rem x7 x8 x7
+    jal x1 gcd
+return:
+    lw x1 8 sp
+    lw x6 4 sp
+    lw x7 0 sp
+    addi sp sp 12
+    jalr x0 x1 0
+done:
+    add x10 x6 x0
+    beq x0 x0 return
+exit:
+lw x5 8 sp
+lw x6 4 sp
+lw x7 0 sp
+lw x8 12 sp
+addi sp sp 16
