@@ -1,0 +1,36 @@
+.data
+b: .word 30
+a: .word 54
+
+.text
+lui x31 0x10000
+lw x3 0 x31  #b
+lw x4 4 x31   #a
+
+jal x1 gcd
+jal x0 exit
+
+gcd:
+    addi x2 x2 -4
+    sw x1 0 x2
+    
+    beq x3 x0 base
+    
+    rem x6 x4 x3  
+    #addi x10 x0 x6  #final answer in x10
+    add x4 x3 x0
+    add x3 x6 x0
+    
+    jal x1 gcd
+    
+    lw x1 0 x2
+    addi x2 x2 4
+    jalr x0 x1 0
+    
+base:
+    lw x1 0 x2
+    addi x10 x4 0
+    addi x2 x2 4
+    jalr x0 x1 0
+    
+exit:
