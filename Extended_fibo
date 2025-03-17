@@ -1,0 +1,70 @@
+#recursion is f(n)=f(n-1)+f(n-2)+f(n-3) base is f(1)=1 f(2)=2 f(3)=3
+.data
+n: .word 10
+
+.text
+lui x31 0x10000
+lw x3 0 x31 #the value of n
+
+addi x30 x0 1
+addi x29 x0 2
+addi x28 x0 3
+
+jal x1 recursion
+jal x0 exit
+
+recursion:
+    addi x2 x2 -16
+    sw x1 12 x2 #store the return address
+    sw x3 8 x2 #store the value of n, leave 2 spaces for the results of f(n-1) and f(n-2)
+    
+    addi x5 x0 4
+    blt x3 x5 base
+    addi x3 x3 -1
+    jal x1 recursion
+    
+    sw x10 4 x2 #store the result for n-1
+    lw x3 8 x2 #restore the callee n
+    
+    addi x2 x2 -4 #make space for n-2 call
+    sw x1 0 x2
+    addi x3 x3 -2
+    jal x1 recursion #n-2 called, will save it to x10
+    addi x2 x2 4 #pop out the address
+    
+    lw x6 4 x2
+    add x10 x6 x10
+    sw x10 0 x2 #store f(n-1)+f(n-2)
+    
+    lw x3 8 x2
+    addi x2 x2 -4
+    sw x1 0 x2
+    addi x3 x3 -3 #prepare for f(n-3)
+    jal x1 recursion
+    addi x2 x2 4
+    
+    lw x6 0 x2 #load f(n-1)+f(n-2)
+    add x10 x6 x10 
+    
+    lw x1 12 x2
+    addi x2 x2 16
+    jalr x0 x1 0
+    
+    
+base:
+    lw x1 12 x2
+    beq x3 x30 oneCase
+    beq x3 x29 twoCase
+    addi x10 x0 3
+    addi x2 x2 16
+    jalr x0 x1 0
+    oneCase:
+        addi x10 x0 1
+        addi x2 x2 16
+        jalr x0 x1 0
+    twoCase:
+        addi x10 x0 2
+        addi x2 x2 16
+        jalr x0 x1 0
+    
+exit:
